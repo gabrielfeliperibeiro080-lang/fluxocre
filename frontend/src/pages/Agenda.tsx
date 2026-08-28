@@ -93,8 +93,8 @@ export function Agenda() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Agenda de Cobranças</h1>
-        <p className="text-muted-foreground">Acompanhe os próximos vencimentos e parcelas em atraso.</p>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Agenda de Cobranças</h1>
+        <p className="text-muted-foreground text-sm">Acompanhe os próximos vencimentos e parcelas em atraso.</p>
       </div>
 
       <Card>
@@ -103,7 +103,7 @@ export function Agenda() {
           <CardDescription>Visão geral de quem deve pagar nos próximos dias.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

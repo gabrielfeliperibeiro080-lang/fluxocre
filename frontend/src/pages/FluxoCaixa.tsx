@@ -67,15 +67,15 @@ export function FluxoCaixa() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Fluxo de Caixa</h1>
-          <p className="text-muted-foreground">Controle suas entradas e saídas financeiras.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Fluxo de Caixa</h1>
+          <p className="text-muted-foreground text-sm">Controle suas entradas e saídas financeiras.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="destructive" className="gap-2"><Plus size={16} /> Nova Saída</Button>
+            <Button variant="destructive" className="gap-2 w-full sm:w-auto"><Plus size={16} /> Nova Saída</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>

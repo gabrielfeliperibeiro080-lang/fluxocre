@@ -235,15 +235,15 @@ export function Operacoes() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Operações de Crédito</h1>
-          <p className="text-muted-foreground">Gerencie empréstimos, parcelamentos e baixas.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Operações de Crédito</h1>
+          <p className="text-muted-foreground text-sm">Gerencie empréstimos, parcelamentos e baixas.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2"><Plus size={16} /> Nova Operação</Button>
+            <Button className="gap-2 w-full sm:w-auto"><Plus size={16} /> Nova Operação</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -299,7 +299,7 @@ export function Operacoes() {
           <CardDescription>Clique na operação para ver as parcelas.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -332,13 +332,13 @@ export function Operacoes() {
                             <h4 className="font-semibold mb-2 text-sm">Cronograma de Parcelas</h4>
                             <div className="grid gap-2">
                               {installmentsMap[op.id].map(inst => (
-                                <div key={inst.id} className="flex items-center justify-between bg-background p-3 rounded border text-sm">
-                                  <div className="flex items-center gap-4">
+                                <div key={inst.id} className="flex flex-col gap-2 bg-background p-3 rounded border text-sm sm:flex-row sm:items-center sm:justify-between">
+                                  <div className="flex items-center gap-3">
                                     <span className="font-bold w-6">{inst.installment_number}º</span>
                                     <span>Vence: {new Date(inst.due_date).toLocaleDateString('pt-BR')}</span>
                                     <span className="font-medium">R$ {Number(inst.total_amount).toFixed(2)}</span>
                                   </div>
-                                  <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-3 justify-end">
                                     {inst.status === 'paid' ? (
                                       <div className="flex gap-2 items-center">
                                         <span className="flex items-center text-green-600 font-medium"><CheckCircle size={16} className="mr-1"/> Paga</span>
