@@ -296,79 +296,151 @@ export function Operacoes() {
       <Card>
         <CardHeader>
           <CardTitle>Histórico de Operações</CardTitle>
-          <CardDescription>Clique na operação para ver as parcelas.</CardDescription>
+          <CardDescription>Toque na operação para ver as parcelas.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Valor Liberado</TableHead>
-                  <TableHead>Total c/ Juros</TableHead>
-                  <TableHead>Parcelas</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+        <CardContent className="p-0 sm:p-6">
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+          ) : operacoes.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground px-6">
+              Nenhuma operação cadastrada.
+            </div>
+          ) : (
+            <>
+              {/* Cards — Mobile */}
+              <div className="divide-y md:hidden">
                 {operacoes.map((op) => (
-                  <React.Fragment key={op.id}>
-                    <TableRow className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => fetchInstallments(op.id)}>
-                      <TableCell className="font-medium">{op.clients?.name}</TableCell>
-                      <TableCell>R$ {Number(op.amount).toFixed(2)}</TableCell>
-                      <TableCell className="text-primary font-semibold">R$ {Number(op.total_amount).toFixed(2)}</TableCell>
-                      <TableCell>{op.installments_count}x</TableCell>
-                      <TableCell>{new Date(op.start_date).toLocaleDateString('pt-BR')}</TableCell>
-                      <TableCell className="text-right">
-                        {expandedLoanId === op.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                      </TableCell>
-                    </TableRow>
-                    
+                  <div key={op.id}>
+                    <div
+                      className="px-4 py-3 flex items-center justify-between gap-3 cursor-pointer active:bg-muted/50"
+                      onClick={() => fetchInstallments(op.id)}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm">{op.clients?.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(op.start_date).toLocaleDateString('pt-BR')} • {op.installments_count}x
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-muted-foreground">R$ {Number(op.amount).toFixed(2)}</span>
+                          <span className="text-xs">→</span>
+                          <span className="text-sm font-semibold text-primary">R$ {Number(op.total_amount).toFixed(2)}</span>
+                        </div>
+                      </div>
+                      {expandedLoanId === op.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                    </div>
+
                     {expandedLoanId === op.id && installmentsMap[op.id] && (
-                      <TableRow className="bg-muted/30">
-                        <TableCell colSpan={6} className="p-0">
-                          <div className="p-4 border-b">
-                            <h4 className="font-semibold mb-2 text-sm">Cronograma de Parcelas</h4>
-                            <div className="grid gap-2">
-                              {installmentsMap[op.id].map(inst => (
-                                <div key={inst.id} className="flex flex-col gap-2 bg-background p-3 rounded border text-sm sm:flex-row sm:items-center sm:justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <span className="font-bold w-6">{inst.installment_number}º</span>
-                                    <span>Vence: {new Date(inst.due_date).toLocaleDateString('pt-BR')}</span>
-                                    <span className="font-medium">R$ {Number(inst.total_amount).toFixed(2)}</span>
-                                  </div>
-                                  <div className="flex items-center gap-3 justify-end">
-                                    {inst.status === 'paid' ? (
-                                      <div className="flex gap-2 items-center">
-                                        <span className="flex items-center text-green-600 font-medium"><CheckCircle size={16} className="mr-1"/> Paga</span>
-                                        <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => {
-                                            const c = clientes.find(c => c.id === inst.client_id);
-                                            const pdf = generateReceipt(c, inst, new Date().toISOString());
-                                            downloadBase64PDF(pdf, `Recibo_${inst.installment_number}.pdf`);
-                                        }}><FileText size={14} className="mr-1"/> Recibo</Button>
-                                      </div>
-                                    ) : (
-                                      <>
-                                        <span className="flex items-center text-yellow-600 font-medium"><Clock size={16} className="mr-1"/> Pendente</span>
-                                        <Button size="sm" onClick={() => handlePayInstallment(inst)}>Dar Baixa</Button>
-                                      </>
-                                    )}
-                                  </div>
+                      <div className="bg-muted/30 px-4 py-3 border-t">
+                        <h4 className="font-semibold mb-2 text-xs text-muted-foreground uppercase tracking-wide">Parcelas</h4>
+                        <div className="grid gap-2">
+                          {installmentsMap[op.id].map(inst => (
+                            <div key={inst.id} className="bg-background p-3 rounded border text-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-bold">{inst.installment_number}ª parcela</span>
+                                <span className="font-medium">R$ {Number(inst.total_amount).toFixed(2)}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Vence: {new Date(inst.due_date).toLocaleDateString('pt-BR')}</span>
+                                <div className="flex items-center gap-2">
+                                  {inst.status === 'paid' ? (
+                                    <>
+                                      <span className="flex items-center text-green-600 text-xs font-medium"><CheckCircle size={14} className="mr-1"/> Paga</span>
+                                      <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => {
+                                        const c = clientes.find(c => c.id === inst.client_id);
+                                        const pdf = generateReceipt(c, inst, new Date().toISOString());
+                                        downloadBase64PDF(pdf, `Recibo_${inst.installment_number}.pdf`);
+                                      }}><FileText size={12} className="mr-1"/> Recibo</Button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="flex items-center text-yellow-600 text-xs font-medium"><Clock size={14} className="mr-1"/> Pendente</span>
+                                      <Button size="sm" className="h-6 text-xs px-2" onClick={() => handlePayInstallment(inst)}>Baixa</Button>
+                                    </>
+                                  )}
                                 </div>
-                              ))}
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                  </React.Fragment>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
-          </div>
+              </div>
+
+              {/* Tabela — Desktop */}
+              <div className="hidden md:block rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Valor Liberado</TableHead>
+                      <TableHead>Total c/ Juros</TableHead>
+                      <TableHead>Parcelas</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {operacoes.map((op) => (
+                      <React.Fragment key={op.id}>
+                        <TableRow className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => fetchInstallments(op.id)}>
+                          <TableCell className="font-medium">{op.clients?.name}</TableCell>
+                          <TableCell>R$ {Number(op.amount).toFixed(2)}</TableCell>
+                          <TableCell className="text-primary font-semibold">R$ {Number(op.total_amount).toFixed(2)}</TableCell>
+                          <TableCell>{op.installments_count}x</TableCell>
+                          <TableCell>{new Date(op.start_date).toLocaleDateString('pt-BR')}</TableCell>
+                          <TableCell className="text-right">
+                            {expandedLoanId === op.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                          </TableCell>
+                        </TableRow>
+                        {expandedLoanId === op.id && installmentsMap[op.id] && (
+                          <TableRow className="bg-muted/30">
+                            <TableCell colSpan={6} className="p-0">
+                              <div className="p-4 border-b">
+                                <h4 className="font-semibold mb-2 text-sm">Cronograma de Parcelas</h4>
+                                <div className="grid gap-2">
+                                  {installmentsMap[op.id].map(inst => (
+                                    <div key={inst.id} className="flex flex-col gap-2 bg-background p-3 rounded border text-sm sm:flex-row sm:items-center sm:justify-between">
+                                      <div className="flex items-center gap-3">
+                                        <span className="font-bold w-6">{inst.installment_number}º</span>
+                                        <span>Vence: {new Date(inst.due_date).toLocaleDateString('pt-BR')}</span>
+                                        <span className="font-medium">R$ {Number(inst.total_amount).toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex items-center gap-3 justify-end">
+                                        {inst.status === 'paid' ? (
+                                          <div className="flex gap-2 items-center">
+                                            <span className="flex items-center text-green-600 font-medium"><CheckCircle size={16} className="mr-1"/> Paga</span>
+                                            <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => {
+                                              const c = clientes.find(c => c.id === inst.client_id);
+                                              const pdf = generateReceipt(c, inst, new Date().toISOString());
+                                              downloadBase64PDF(pdf, `Recibo_${inst.installment_number}.pdf`);
+                                            }}><FileText size={14} className="mr-1"/> Recibo</Button>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <span className="flex items-center text-yellow-600 font-medium"><Clock size={16} className="mr-1"/> Pendente</span>
+                                            <Button size="sm" onClick={() => handlePayInstallment(inst)}>Dar Baixa</Button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
+
