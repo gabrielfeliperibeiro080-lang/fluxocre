@@ -266,57 +266,81 @@ export function Clientes() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Telefone / WhatsApp</TableHead>
-                  <TableHead>Documento</TableHead>
-                  <TableHead className="text-center">Permite Lembretes?</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24">Carregando...</TableCell>
-                  </TableRow>
-                ) : clientes.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                      Nenhum cliente cadastrado. Clique em "Novo Cliente" para começar.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  clientes.map((cliente) => (
-                    <TableRow key={cliente.id}>
-                      <TableCell className="font-medium">{cliente.name}</TableCell>
-                      <TableCell>{cliente.phone}</TableCell>
-                      <TableCell>{cliente.document || '-'}</TableCell>
-                      <TableCell className="text-center">
-                        {cliente.consent_whatsapp ? (
-                          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                            <Check className="mr-1 h-3 w-3" /> Sim
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                            <X className="mr-1 h-3 w-3" /> Não
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(cliente)} className="text-muted-foreground hover:text-foreground">
-                          <Pencil className="w-4 h-4 mr-2" /> Editar
-                        </Button>
-                      </TableCell>
+        <CardContent className="p-0 sm:p-6">
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+          ) : clientes.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground px-6">
+              Nenhum cliente cadastrado. Clique em "Novo Cliente" para começar.
+            </div>
+          ) : (
+            <>
+              {/* Lista em cards — Mobile */}
+              <div className="divide-y md:hidden">
+                {clientes.map((cliente) => (
+                  <div key={cliente.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{cliente.name}</p>
+                      <p className="text-xs text-muted-foreground">{cliente.phone}</p>
+                      {cliente.document && (
+                        <p className="text-xs text-muted-foreground">{cliente.document}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {cliente.consent_whatsapp ? (
+                        <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                          <Check className="mr-1 h-3 w-3" /> WhatsApp
+                        </span>
+                      ) : null}
+                      <Button variant="ghost" size="sm" onClick={() => handleEditClick(cliente)} className="h-8 w-8 p-0">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tabela — Desktop */}
+              <div className="hidden md:block rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Telefone / WhatsApp</TableHead>
+                      <TableHead>Documento</TableHead>
+                      <TableHead className="text-center">Permite Lembretes?</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {clientes.map((cliente) => (
+                      <TableRow key={cliente.id}>
+                        <TableCell className="font-medium">{cliente.name}</TableCell>
+                        <TableCell>{cliente.phone}</TableCell>
+                        <TableCell>{cliente.document || '-'}</TableCell>
+                        <TableCell className="text-center">
+                          {cliente.consent_whatsapp ? (
+                            <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                              <Check className="mr-1 h-3 w-3" /> Sim
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                              <X className="mr-1 h-3 w-3" /> Não
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" onClick={() => handleEditClick(cliente)} className="text-muted-foreground hover:text-foreground">
+                            <Pencil className="w-4 h-4 mr-2" /> Editar
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
