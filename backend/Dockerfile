@@ -9,6 +9,9 @@ RUN npm install
 
 COPY backend/ .
 
+# Corrige permissões dos binários (necessário ao copiar do Windows)
+RUN chmod +x node_modules/.bin/*
+
 # Compila o TypeScript
 RUN npm run build
 
