@@ -127,8 +127,8 @@ export function startWorker() {
 
       // Buscar os perfis para pegar as chaves PIX
       const userIds = [...new Set([
-        ...(dueTomorrow || []).map(i => i.user_id),
-        ...(lateInstallments || []).map(i => i.user_id)
+        ...(dueTomorrow || []).map((i: any) => i.user_id),
+        ...(lateInstallments || []).map((i: any) => i.user_id)
       ])];
       
       const { data: profiles } = await supabase
