@@ -185,13 +185,12 @@ export function Clientes() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
-          <p className="text-muted-foreground">Gerencie sua base de clientes e consentimentos.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Clientes</h1>
+          <p className="text-muted-foreground text-sm">Gerencie sua base de clientes e consentimentos.</p>
         </div>
-        
-        <Button onClick={handleNewClick} className="gap-2">
+        <Button onClick={handleNewClick} className="gap-2 w-full sm:w-auto">
           <UserPlus size={16} />
           Novo Cliente
         </Button>
@@ -256,19 +255,19 @@ export function Clientes() {
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
             <div>
               <CardTitle>Todos os Clientes</CardTitle>
               <CardDescription>Lista completa de clientes cadastrados.</CardDescription>
             </div>
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input type="search" placeholder="Buscar cliente..." className="pl-8" />
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
