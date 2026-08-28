@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, Wallet, Calendar, Settings, MessageSquare, Menu, X, LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Wallet, Calendar, Settings, MessageSquare, Menu, X, type LucideIcon } from 'lucide-react';
 import { Toaster } from "@/components/ui/toaster";
 
 export function DashboardLayout() {
