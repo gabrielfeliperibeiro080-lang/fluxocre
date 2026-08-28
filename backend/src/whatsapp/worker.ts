@@ -50,7 +50,21 @@ export function startWorker() {
           const phone = msg.phone.replace(/\D/g, '');
           const jid = `55${phone}@s.whatsapp.net`;
           
-          await waSocket.sendMessage(jid, { text: msg.message });
+          let msgPayload: any = { text: msg.message };
+          
+          // Se tiver anexo em base64, converte e envia como documento
+          if (msg.media_base64) {
+             const base64Data = msg.media_base64.includes(',') ? msg.media_base64.split(',')[1] : msg.media_base64;
+             const buffer = Buffer.from(base64Data, 'base64');
+             msgPayload = {
+                 document: buffer,
+                 mimetype: 'application/pdf',
+                 fileName: msg.media_name || 'Documento_LuckCred.pdf',
+                 caption: msg.message // O texto vai como legenda do arquivo
+             };
+          }
+
+          await waSocket.sendMessage(jid, msgPayload);
           
           // Marca como enviado
           await supabase
@@ -111,6 +125,22 @@ export function startWorker() {
 
       if (err1 || err2) throw new Error('Erro ao buscar parcelas');
 
+      // Buscar os perfis para pegar as chaves PIX
+      const userIds = [...new Set([
+        ...(dueTomorrow || []).map(i => i.user_id),
+        ...(lateInstallments || []).map(i => i.user_id)
+      ])];
+      
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, pix_key')
+        .in('id', userIds);
+      
+      const getPixText = (userId: string) => {
+        const profile = profiles?.find((p: any) => p.id === userId);
+        return profile?.pix_key ? `\n\nChave PIX para pagamento: ${profile.pix_key}` : '';
+      };
+
       const messagesToQueue = [];
 
       // Prepara os avisos de vencimento
@@ -121,7 +151,7 @@ export function startWorker() {
             client_id: inst.client_id,
             installment_id: inst.id,
             phone: inst.clients.phone,
-            message: `*FluxoCred informa:* Olá ${inst.clients.name}, sua parcela ${inst.installment_number} no valor de R$ ${Number(inst.total_amount).toFixed(2)} vence amanhã (${new Date(inst.due_date).toLocaleDateString('pt-BR')}). Qualquer dúvida, estamos à disposição!`,
+            message: `*Luck Cred informa:* Olá ${inst.clients.name}, sua parcela ${inst.installment_number} no valor de R$ ${Number(inst.total_amount).toFixed(2)} vence amanhã (${new Date(inst.due_date).toLocaleDateString('pt-BR')}). Qualquer dúvida, estamos à disposição!${getPixText(inst.user_id)}`,
             scheduled_at: new Date().toISOString(), // Envia logo após gerar
             status: 'pending'
           });
@@ -136,7 +166,7 @@ export function startWorker() {
             client_id: inst.client_id,
             installment_id: inst.id,
             phone: inst.clients.phone,
-            message: `*FluxoCred informa:* Olá ${inst.clients.name}, notamos que sua parcela ${inst.installment_number} no valor de R$ ${Number(inst.total_amount).toFixed(2)} que venceu em ${new Date(inst.due_date).toLocaleDateString('pt-BR')} ainda consta como pendente. Caso já tenha pago, desconsidere.`,
+            message: `*Luck Cred informa:* Olá ${inst.clients.name}, notamos que sua parcela ${inst.installment_number} no valor de R$ ${Number(inst.total_amount).toFixed(2)} que venceu em ${new Date(inst.due_date).toLocaleDateString('pt-BR')} ainda consta como pendente. Caso já tenha pago, desconsidere.${getPixText(inst.user_id)}`,
             scheduled_at: new Date().toISOString(),
             status: 'pending'
           });

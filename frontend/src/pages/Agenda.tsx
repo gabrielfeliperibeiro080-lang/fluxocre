@@ -68,7 +68,10 @@ export function Agenda() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const message = `*FluxoCred informa:* Olá ${inst.clients.name}, lembramos que sua parcela ${inst.installment_number} no valor de R$ ${Number(inst.total_amount).toFixed(2)} está agendada para ${new Date(inst.due_date + 'T00:00:00').toLocaleDateString('pt-BR')}. Caso já tenha pago, desconsidere.`;
+      const { data: profile } = await supabase.from('profiles').select('pix_key').eq('id', user.id).single();
+      const pixText = profile?.pix_key ? `\n\nChave PIX para pagamento: ${profile.pix_key}` : '';
+
+      const message = `*Luck Cred informa:* Olá ${inst.clients.name}, lembramos que sua parcela ${inst.installment_number} no valor de R$ ${Number(inst.total_amount).toFixed(2)} está agendada para ${new Date(inst.due_date + 'T00:00:00').toLocaleDateString('pt-BR')}. Caso já tenha pago, desconsidere.${pixText}`;
 
       const { error } = await supabase.from('message_queue').insert([{
         user_id: user.id,

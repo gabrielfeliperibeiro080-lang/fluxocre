@@ -21,7 +21,7 @@ export function DashboardLayout() {
       {/* Sidebar Desktop */}
       <aside className="hidden w-64 flex-col border-r bg-card md:flex">
         <div className="flex h-14 items-center border-b px-4">
-          <span className="text-xl font-bold tracking-tight text-primary">FLUXOCRED</span>
+          <span className="text-xl font-bold tracking-tight text-primary">LUCK CRED</span>
         </div>
         <nav className="flex-1 space-y-1 p-2">
           {navItems.map((item) => {

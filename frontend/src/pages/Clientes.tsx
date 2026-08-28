@@ -130,6 +130,59 @@ export function Clientes() {
     }
   };
 
+  const handleDeleteCliente = async () => {
+    if (!editingId) return;
+    const confirm1 = window.confirm('Tem certeza que deseja excluir este cliente?');
+    if (!confirm1) return;
+
+    try {
+      // Tenta deletar o cliente primeiro
+      const { error } = await supabase.from('clients').delete().eq('id', editingId);
+      
+      if (error && error.code === '23503') {
+         // Cliente tem vínculos, pede segunda validação
+         const confirm2 = window.confirm('ATENÇÃO: Este cliente possui empréstimos e pagamentos registrados. Ao excluir, TODO o histórico financeiro vinculado a ele será APAGADO permanentemente. Deseja mesmo prosseguir e APAGAR TUDO?');
+         if (!confirm2) return;
+         
+         toast({ title: 'Apagando dados...', description: 'Limpando histórico do cliente. Aguarde.', duration: 5000 });
+         
+         // 1. Busca os IDs das parcelas para apagar os pagamentos vinculados
+         const { data: instData } = await supabase.from('installments').select('id').eq('client_id', editingId);
+         const instIds = instData?.map(i => i.id) || [];
+         
+         if (instIds.length > 0) {
+            await supabase.from('payments').delete().in('installment_id', instIds);
+         }
+         
+         // 2. Apaga as mensagens da fila
+         await supabase.from('message_queue').delete().eq('client_id', editingId);
+         
+         // 3. Apaga entradas do fluxo de caixa
+         await supabase.from('income').delete().eq('client_id', editingId);
+         
+         // 4. Apaga as parcelas
+         await supabase.from('installments').delete().eq('client_id', editingId);
+         
+         // 5. Apaga os empréstimos
+         await supabase.from('loans').delete().eq('client_id', editingId);
+         
+         // 6. Finalmente apaga o cliente
+         const { error: finalError } = await supabase.from('clients').delete().eq('id', editingId);
+         if (finalError) throw finalError;
+         
+      } else if (error) {
+         throw error;
+      }
+      
+      toast({ title: 'Excluído!', description: 'Cliente e todos os seus dados foram removidos com sucesso.' });
+      setIsEditDialogOpen(false);
+      setIsDialogOpen(false);
+      fetchClientes();
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex justify-between items-center">
@@ -188,7 +241,12 @@ export function Clientes() {
                   </Label>
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex justify-between w-full sm:justify-between">
+                {editingId && (
+                  <Button type="button" variant="destructive" onClick={handleDeleteCliente}>
+                    Excluir Cliente
+                  </Button>
+                )}
                 <Button type="submit">{editingId ? 'Salvar Alterações' : 'Salvar Cliente'}</Button>
               </DialogFooter>
             </form>

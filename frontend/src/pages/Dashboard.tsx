@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Users, CreditCard, TrendingUp, AlertTriangle, Percent } from 'lucide-react';
+import { DollarSign, Users, TrendingUp, AlertTriangle, Percent, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -12,6 +12,7 @@ export function Dashboard() {
   const [metrics, setMetrics] = useState({
     totalConcedido: 0,
     lucroJuros: 0,
+    valorRecebido: 0,
     valoresAtraso: 0,
     clientesAtivos: 0,
   });
@@ -31,11 +32,10 @@ export function Dashboard() {
       // Busca clientes
       const { count: clientsCount, error: clientsError } = await supabase.from('clients').select('*', { count: 'exact', head: true });
 
-      // Busca parcelas em atraso
-      const { data: lateInstallments, error: installmentsError } = await supabase
+      // Busca todas as parcelas
+      const { data: allInstallments, error: installmentsError } = await supabase
         .from('installments')
-        .select('total_amount, paid_amount')
-        .eq('status', 'late');
+        .select('total_amount, paid_amount, status, due_date');
 
       if (loansError || clientsError || installmentsError) {
         throw new Error("Erro ao buscar dados do Supabase");
@@ -50,13 +50,24 @@ export function Dashboard() {
       });
 
       let valoresAtraso = 0;
-      lateInstallments?.forEach(inst => {
-        valoresAtraso += (Number(inst.total_amount) - Number(inst.paid_amount));
+      let valorRecebido = 0;
+      
+      const today = new Date().toISOString().split('T')[0];
+
+      allInstallments?.forEach(inst => {
+        // Se a parcela não está paga e a data de vencimento já passou
+        if (inst.status !== 'paid' && inst.due_date < today) {
+          valoresAtraso += (Number(inst.total_amount) - Number(inst.paid_amount || 0));
+        }
+        if (Number(inst.paid_amount) > 0) {
+          valorRecebido += Number(inst.paid_amount);
+        }
       });
 
       setMetrics({
         totalConcedido,
         lucroJuros,
+        valorRecebido,
         valoresAtraso,
         clientesAtivos: clientsCount || 0,
       });
@@ -79,7 +90,7 @@ export function Dashboard() {
         <p className="text-muted-foreground">Visão geral financeira do seu negócio.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Concedido</CardTitle>
@@ -103,6 +114,19 @@ export function Dashboard() {
               {loading ? '...' : formatCurrency(metrics.lucroJuros)}
             </div>
             <p className="text-xs text-primary/80">Rendimento total projetado</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-500/50 bg-green-500/5 dark:bg-green-500/10">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-green-600 dark:text-green-400">Valor Recebido</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {loading ? '...' : formatCurrency(metrics.valorRecebido)}
+            </div>
+            <p className="text-xs text-green-600/80 dark:text-green-400/80">Total pago pelos clientes</p>
           </CardContent>
         </Card>
 

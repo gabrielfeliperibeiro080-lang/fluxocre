@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, ChevronDown, ChevronUp, CheckCircle, Clock } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp, CheckCircle, Clock, FileText } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { useToast } from "@/hooks/use-toast";
+import { generateLoanTerm, generateReceipt, downloadBase64PDF } from '../lib/pdf';
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL || '',
@@ -37,7 +38,7 @@ export function Operacoes() {
   }, []);
 
   const fetchClientes = async () => {
-    const { data } = await supabase.from('clients').select('id, name');
+    const { data } = await supabase.from('clients').select('id, name, document, phone, consent_whatsapp');
     if (data) setClientes(data);
   };
 
@@ -133,7 +134,8 @@ export function Operacoes() {
       if (instError) throw instError;
 
       // 3. Registrar a SAÍDA de caixa (dinheiro que você entregou ao cliente)
-      const clientName = clientes.find(c => c.id === formData.client_id)?.name || 'Cliente';
+      const client = clientes.find(c => c.id === formData.client_id);
+      const clientName = client?.name || 'Cliente';
       const { error: expenseError } = await supabase.from('expenses').insert([{
         user_id: user.id,
         description: `Empréstimo liberado - ${clientName}`,
@@ -143,7 +145,27 @@ export function Operacoes() {
       }]);
       if (expenseError) throw expenseError;
 
-      toast({ title: 'Sucesso', description: 'Operação de crédito criada com sucesso!' });
+      // 4. Gerar Termo em PDF
+      const pdfBase64 = generateLoanTerm(client, loanData, installmentsToInsert);
+      
+      // Enviar Termo por WhatsApp
+      if (client?.consent_whatsapp) {
+        await supabase.from('message_queue').insert([{
+          user_id: user.id,
+          client_id: formData.client_id,
+          phone: client.phone,
+          message: `*Luck Cred informa:* Olá ${clientName}, segue anexo o Termo de Ciência referente ao seu novo empréstimo no valor de R$ ${principal.toFixed(2)}.\n\nPara validarmos a liberação de forma digital, grave um curto vídeo-selfie lendo a frase que está no final do documento em PDF e nos envie por aqui.`,
+          scheduled_at: new Date().toISOString(),
+          status: 'pending',
+          media_base64: pdfBase64,
+          media_name: 'Termo_Emprestimo.pdf'
+        }]);
+      }
+
+      // Download Automático do Termo
+      downloadBase64PDF(pdfBase64, `Termo_${clientName.replace(/\s+/g, '_')}.pdf`);
+
+      toast({ title: 'Sucesso', description: 'Operação de crédito criada e Termo gerado!' });
       setIsDialogOpen(false);
       setFormData({ client_id: '', amount: '', interest_rate: '', installments_count: '1', first_due_date: '' });
       fetchOperacoes();
@@ -177,19 +199,26 @@ export function Operacoes() {
       }]);
       if (incomeError) throw incomeError;
 
-      // 3. Colocar recibo na fila do WhatsApp
+      // 3. Colocar recibo na fila do WhatsApp e baixar na máquina
       const client = clientes.find(c => c.id === inst.client_id);
-      const { data: clientDetails } = await supabase.from('clients').select('phone, consent_whatsapp').eq('id', inst.client_id).single();
       
-      if (clientDetails?.consent_whatsapp) {
+      // Gera o Recibo PDF
+      const pdfBase64 = generateReceipt(client, inst, new Date().toISOString());
+      
+      // Dispara o download no navegador do gerente
+      downloadBase64PDF(pdfBase64, `Recibo_${inst.installment_number}_${client?.name.replace(/\s+/g, '_')}.pdf`);
+
+      if (client?.consent_whatsapp) {
         await supabase.from('message_queue').insert([{
           user_id: user.id,
           client_id: inst.client_id,
           installment_id: inst.id,
-          phone: clientDetails.phone,
-          message: `*FluxoCred informa:* Recebemos o pagamento da parcela ${inst.installment_number} no valor de R$ ${Number(inst.total_amount).toFixed(2)}. Obrigado!`,
+          phone: client.phone,
+          message: `*Luck Cred informa:* Recebemos o pagamento da parcela ${inst.installment_number} no valor de R$ ${Number(inst.total_amount).toFixed(2)}. Segue seu recibo anexo!`,
           scheduled_at: new Date().toISOString(),
-          status: 'pending'
+          status: 'pending',
+          media_base64: pdfBase64,
+          media_name: 'Recibo_Pagamento.pdf'
         }]);
       }
 
@@ -311,7 +340,14 @@ export function Operacoes() {
                                   </div>
                                   <div className="flex items-center gap-4">
                                     {inst.status === 'paid' ? (
-                                      <span className="flex items-center text-green-600 font-medium"><CheckCircle size={16} className="mr-1"/> Paga</span>
+                                      <div className="flex gap-2 items-center">
+                                        <span className="flex items-center text-green-600 font-medium"><CheckCircle size={16} className="mr-1"/> Paga</span>
+                                        <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => {
+                                            const c = clientes.find(c => c.id === inst.client_id);
+                                            const pdf = generateReceipt(c, inst, new Date().toISOString());
+                                            downloadBase64PDF(pdf, `Recibo_${inst.installment_number}.pdf`);
+                                        }}><FileText size={14} className="mr-1"/> Recibo</Button>
+                                      </div>
                                     ) : (
                                       <>
                                         <span className="flex items-center text-yellow-600 font-medium"><Clock size={16} className="mr-1"/> Pendente</span>

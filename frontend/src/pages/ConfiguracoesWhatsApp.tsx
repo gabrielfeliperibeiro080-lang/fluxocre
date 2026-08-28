@@ -1,13 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle2, Smartphone, Loader2 } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertCircle, CheckCircle2, Smartphone, Loader2, Wallet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL || '',
+  import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+);
 
 export function ConfiguracoesWhatsApp() {
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'waiting_qr' | 'connected' | 'error' | 'logged_out'>('disconnected');
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [pixKey, setPixKey] = useState('');
+  const [savingPix, setSavingPix] = useState(false);
   const { toast } = useToast();
 
   const fetchStatus = async () => {
@@ -21,9 +31,19 @@ export function ConfiguracoesWhatsApp() {
     }
   };
 
+  const loadProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase.from('profiles').select('pix_key').eq('id', user.id).single();
+      if (data && data.pix_key) {
+        setPixKey(data.pix_key);
+      }
+    }
+  };
+
   useEffect(() => {
     fetchStatus();
-    // Poll a cada 3 segundos enquanto não estiver conectado
+    loadProfile();
     const interval = setInterval(() => {
       if (status !== 'connected') {
         fetchStatus();
@@ -53,75 +73,121 @@ export function ConfiguracoesWhatsApp() {
     }
   };
 
+  const savePixKey = async () => {
+    setSavingPix(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { error } = await supabase.from('profiles').upsert({ id: user.id, pix_key: pixKey });
+      if (error) throw error;
+      toast({ title: "Sucesso", description: "Chave PIX atualizada! Ela será incluída nas cobranças." });
+    } catch (error: any) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } finally {
+      setSavingPix(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">WhatsApp Web</h1>
-        <p className="text-muted-foreground">Gerencie a conexão do WhatsApp para envios automáticos.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
+        <p className="text-muted-foreground">Gerencie o WhatsApp e as configurações financeiras dos lembretes.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-primary" />
-              Status da Conexão
-            </CardTitle>
-            <CardDescription>
-              Conecte seu celular para automatizar lembretes e cobranças.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center gap-4 p-4 border rounded-lg bg-card">
-              {status === 'connected' && (
-                <>
-                  <CheckCircle2 className="w-8 h-8 text-green-500" />
-                  <div>
-                    <p className="font-medium text-green-600 dark:text-green-400">WhatsApp Conectado</p>
-                    <p className="text-sm text-muted-foreground">O sistema está pronto para enviar mensagens.</p>
-                  </div>
-                </>
-              )}
-              {status === 'waiting_qr' && (
-                <>
-                  <Loader2 className="w-8 h-8 text-yellow-500 animate-spin" />
-                  <div>
-                    <p className="font-medium text-yellow-600 dark:text-yellow-400">Aguardando Leitura</p>
-                    <p className="text-sm text-muted-foreground">Escaneie o QR Code ao lado.</p>
-                  </div>
-                </>
-              )}
-              {status === 'connecting' && (
-                <>
-                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                  <div>
-                    <p className="font-medium text-primary">Conectando...</p>
-                    <p className="text-sm text-muted-foreground">Iniciando serviço do WhatsApp.</p>
-                  </div>
-                </>
-              )}
-              {(status === 'disconnected' || status === 'logged_out' || status === 'error') && (
-                <>
-                  <AlertCircle className="w-8 h-8 text-destructive" />
-                  <div>
-                    <p className="font-medium text-destructive">Desconectado</p>
-                    <p className="text-sm text-muted-foreground">O serviço de mensagens está inativo.</p>
-                  </div>
-                </>
-              )}
-            </div>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-primary" />
+                Status da Conexão
+              </CardTitle>
+              <CardDescription>
+                Conecte seu celular para automatizar lembretes e cobranças.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center gap-4 p-4 border rounded-lg bg-card">
+                {status === 'connected' && (
+                  <>
+                    <CheckCircle2 className="w-8 h-8 text-green-500" />
+                    <div>
+                      <p className="font-medium text-green-600 dark:text-green-400">WhatsApp Conectado</p>
+                      <p className="text-sm text-muted-foreground">O sistema está pronto para enviar mensagens.</p>
+                    </div>
+                  </>
+                )}
+                {status === 'waiting_qr' && (
+                  <>
+                    <Loader2 className="w-8 h-8 text-yellow-500 animate-spin" />
+                    <div>
+                      <p className="font-medium text-yellow-600 dark:text-yellow-400">Aguardando Leitura</p>
+                      <p className="text-sm text-muted-foreground">Escaneie o QR Code ao lado.</p>
+                    </div>
+                  </>
+                )}
+                {status === 'connecting' && (
+                  <>
+                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    <div>
+                      <p className="font-medium text-primary">Conectando...</p>
+                      <p className="text-sm text-muted-foreground">Iniciando serviço do WhatsApp.</p>
+                    </div>
+                  </>
+                )}
+                {(status === 'disconnected' || status === 'logged_out' || status === 'error') && (
+                  <>
+                    <AlertCircle className="w-8 h-8 text-destructive" />
+                    <div>
+                      <p className="font-medium text-destructive">Desconectado</p>
+                      <p className="text-sm text-muted-foreground">O serviço de mensagens está inativo.</p>
+                    </div>
+                  </>
+                )}
+              </div>
 
-            <div className="flex gap-4">
-              {status === 'connected' ? (
-                <Button variant="destructive" onClick={handleDisconnect}>Desconectar</Button>
-              ) : (
-                <Button onClick={handleConnect} disabled={status === 'connecting' || status === 'waiting_qr'}>
-                  {status === 'connecting' || status === 'waiting_qr' ? 'Iniciando...' : 'Conectar WhatsApp'}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex gap-4">
+                {status === 'connected' ? (
+                  <Button variant="destructive" onClick={handleDisconnect}>Desconectar</Button>
+                ) : (
+                  <Button onClick={handleConnect} disabled={status === 'connecting' || status === 'waiting_qr'}>
+                    {status === 'connecting' || status === 'waiting_qr' ? 'Iniciando...' : 'Conectar WhatsApp'}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-primary" />
+                Dados de Pagamento
+              </CardTitle>
+              <CardDescription>
+                Configure a chave PIX que será enviada automaticamente aos clientes nas mensagens de cobrança.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="pix">Chave PIX</Label>
+                <Input 
+                  id="pix" 
+                  placeholder="Ex: seuemail@gmail.com ou CPF..." 
+                  value={pixKey}
+                  onChange={(e) => setPixKey(e.target.value)}
+                />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={savePixKey} disabled={savingPix}>
+                {savingPix ? 'Salvando...' : 'Salvar Chave PIX'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
 
         <Card>
           <CardHeader>
