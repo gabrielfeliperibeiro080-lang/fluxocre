@@ -93,37 +93,13 @@ export function DashboardLayout() {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+        <main className="flex-1 overflow-y-auto">
           <div className="container mx-auto p-4 md:p-6 max-w-6xl">
             <Outlet />
           </div>
         </main>
 
-        {/* Mobile Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t bg-card md:hidden">
-          {navItems.slice(0, 5).map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors ${
-                isActive(item.path)
-                  ? 'text-primary'
-                  : 'text-muted-foreground'
-              }`}
-            >
-              <item.icon size={18} />
-              <span>{item.name}</span>
-            </Link>
-          ))}
-          {/* Botão "Mais" para as outras páginas */}
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium text-muted-foreground"
-          >
-            <Menu size={18} />
-            <span>Mais</span>
-          </button>
-        </nav>
+
       </div>
 
       <Toaster />

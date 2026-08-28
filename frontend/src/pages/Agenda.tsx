@@ -102,62 +102,87 @@ export function Agenda() {
           <CardTitle>Próximos Vencimentos</CardTitle>
           <CardDescription>Visão geral de quem deve pagar nos próximos dias.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Parcela</TableHead>
-                  <TableHead className="text-right">Valor Total</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24">Carregando...</TableCell>
-                  </TableRow>
-                ) : installments.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
-                      Nenhuma cobrança pendente para os próximos dias! 🎉
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  installments.map((inst) => (
-                    <TableRow key={inst.id}>
-                      <TableCell className="font-medium">
-                        {new Date(inst.due_date + 'T00:00:00').toLocaleDateString('pt-BR')}
-                      </TableCell>
-                      <TableCell>{inst.clients?.name}</TableCell>
-                      <TableCell>{inst.clients?.phone}</TableCell>
-                      <TableCell>{inst.installment_number}ª</TableCell>
-                      <TableCell className="text-right font-semibold">
-                        R$ {Number(inst.total_amount).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-center flex justify-center">
+        <CardContent className="p-0 sm:p-6">
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+          ) : installments.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground px-6">
+              Nenhuma cobrança pendente para os próximos dias! 🎉
+            </div>
+          ) : (
+            <>
+              {/* Cards — Mobile */}
+              <div className="divide-y md:hidden">
+                {installments.map((inst) => (
+                  <div key={inst.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-sm">{inst.clients?.name}</p>
                         {getStatusBadge(inst.due_date, inst.status)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleManualReminder(inst)}
-                          className="border-green-200 text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
-                        >
-                          Cobrar
-                        </Button>
-                      </TableCell>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Parcela {inst.installment_number}ª • Vence {new Date(inst.due_date + 'T00:00:00').toLocaleDateString('pt-BR')}
+                      </p>
+                      <p className="text-sm font-medium mt-0.5">R$ {Number(inst.total_amount).toFixed(2)}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleManualReminder(inst)}
+                      className="border-green-200 text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 shrink-0"
+                    >
+                      Cobrar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tabela — Desktop */}
+              <div className="hidden md:block rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Telefone</TableHead>
+                      <TableHead>Parcela</TableHead>
+                      <TableHead className="text-right">Valor Total</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {installments.map((inst) => (
+                      <TableRow key={inst.id}>
+                        <TableCell className="font-medium">
+                          {new Date(inst.due_date + 'T00:00:00').toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>{inst.clients?.name}</TableCell>
+                        <TableCell>{inst.clients?.phone}</TableCell>
+                        <TableCell>{inst.installment_number}ª</TableCell>
+                        <TableCell className="text-right font-semibold">
+                          R$ {Number(inst.total_amount).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-center flex justify-center">
+                          {getStatusBadge(inst.due_date, inst.status)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleManualReminder(inst)}
+                            className="border-green-200 text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                          >
+                            Cobrar
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
