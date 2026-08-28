@@ -8,7 +8,7 @@ import { FluxoCaixa } from './pages/FluxoCaixa';
 import { HistoricoWhatsApp } from './pages/HistoricoWhatsApp';
 import { Login } from './pages/Login';
 import { Agenda } from './pages/Agenda';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -17,7 +17,7 @@ const supabase = createClient(
 );
 
 // Rota Privada
-const PrivateRoute = ({ children }: { children: JSX.Element }) => {
+const PrivateRoute = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
