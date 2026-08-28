@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, CreditCard, Wallet, Calendar, Settings, MessageSquare, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Wallet, Calendar, Settings, MessageSquare, Menu, X, LucideIcon } from 'lucide-react';
 import { Toaster } from "@/components/ui/toaster";
 
 export function DashboardLayout() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems = [
-    { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
-    { name: 'Clientes', path: '/clientes', icon: <Users size={20} /> },
-    { name: 'Operações', path: '/operacoes', icon: <CreditCard size={20} /> },
-    { name: 'Fluxo de Caixa', path: '/fluxo-caixa', icon: <Wallet size={20} /> },
-    { name: 'Agenda', path: '/agenda', icon: <Calendar size={20} /> },
-    { name: 'Histórico', path: '/historico-whatsapp', icon: <MessageSquare size={20} /> },
-    { name: 'Config.', path: '/configuracoes', icon: <Settings size={20} /> },
+  const navItems: { name: string; path: string; icon: LucideIcon }[] = [
+    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Clientes', path: '/clientes', icon: Users },
+    { name: 'Operações', path: '/operacoes', icon: CreditCard },
+    { name: 'Fluxo de Caixa', path: '/fluxo-caixa', icon: Wallet },
+    { name: 'Agenda', path: '/agenda', icon: Calendar },
+    { name: 'Histórico', path: '/historico-whatsapp', icon: MessageSquare },
+    { name: 'Config.', path: '/configuracoes', icon: Settings },
   ];
 
   const isActive = (path: string) =>
@@ -38,7 +38,7 @@ export function DashboardLayout() {
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
-              {item.icon}
+              <item.icon size={20} />
               {item.name}
             </Link>
           ))}
@@ -83,7 +83,7 @@ export function DashboardLayout() {
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     }`}
                   >
-                    {item.icon}
+                    <item.icon size={20} />
                     {item.name}
                   </Link>
                 ))}
@@ -111,7 +111,7 @@ export function DashboardLayout() {
                   : 'text-muted-foreground'
               }`}
             >
-              {React.cloneElement(item.icon as React.ReactElement, { size: 18 })}
+              <item.icon size={18} />
               <span>{item.name}</span>
             </Link>
           ))}
