@@ -1,0 +1,33 @@
+# Dependências
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Builds e outputs
+dist/
+build/
+out/
+.next/
+
+# Ambiente e credenciais (NUNCA SUBIR)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+
+# Sessões do WhatsApp antigas
+backend/whatsapp_auth_info/
+whatsapp_auth_info/
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
