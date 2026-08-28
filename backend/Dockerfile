@@ -2,12 +2,12 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copia package.json e instala dependências
-COPY package*.json ./
+# O build context do Railway é a raiz do repo,
+# então precisamos referenciar a pasta backend/ explicitamente
+COPY backend/package*.json ./
 RUN npm install
 
-# Copia o restante do código
-COPY . .
+COPY backend/ .
 
 # Compila o TypeScript
 RUN npm run build
